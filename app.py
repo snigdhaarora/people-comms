@@ -1,5 +1,5 @@
 """
-HR Communication Portal — Streamlit App
+People Comms — Streamlit App
 ========================================
 Replaces the Flask + portal.html setup with a pure-Streamlit interface.
 
@@ -906,8 +906,8 @@ def page_admin():
 
 def main():
     st.set_page_config(
-        page_title="HR Communication Portal",
-        page_icon="📢",
+        page_title="People Comms",
+        page_icon="All Blue.png",
         layout="wide",
         initial_sidebar_state="expanded",
     )
@@ -915,12 +915,11 @@ def main():
     # ── Sidebar ────────────────────────────────────────────────────────────
     with st.sidebar:
         # Logo / branding
+        st.image("All Blue.png", width=180)
         st.markdown(
             """
-            <div style="text-align:center; padding: 1rem 0 0.5rem 0;">
-                <div style="font-size:2.5rem;">📢</div>
-                <div style="font-size:1.1rem; font-weight:700; margin-top:0.25rem;">HR Communication Portal</div>
-                <div style="font-size:0.85rem; color:#888; margin-top:0.1rem;">Cars24</div>
+            <div style="text-align:center; padding: 0.1rem 0 0.5rem 0;">
+                <div style="font-size:1.1rem; font-weight:700; color:#4B4BF7;">People Comms</div>
             </div>
             """,
             unsafe_allow_html=True,
