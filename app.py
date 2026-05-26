@@ -502,6 +502,8 @@ def page_send():
 
     # ── Row 6: Attachment (optional) ───────────────────────────────────────
     st.subheader("📎 Attachment (optional)")
+    if use_slack:
+        st.caption("Slack file upload requires the `files:write` bot scope — add it in api.slack.com → OAuth & Permissions if not already done.")
     attachment_file = st.file_uploader(
         "Attach a file to send along with the message (Slack & Email only)",
         type=["pdf", "png", "jpg", "jpeg", "gif", "doc", "docx", "xlsx", "xls", "csv", "txt", "ppt", "pptx"],
@@ -756,7 +758,7 @@ def page_settings():
 
         st.caption(
             "Required bot scopes: `chat:write` · `users:read` · `users:read.email` · "
-            "`im:write` · `conversations:open`"
+            "`im:write` · `conversations:open` · `files:write` *(needed for file attachments)*"
         )
 
     # ── Email ──────────────────────────────────────────────────────────────
