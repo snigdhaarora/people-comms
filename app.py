@@ -32,6 +32,8 @@ import smtplib
 import time
 import uuid
 from datetime import date
+from email import encoders
+from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Any
@@ -191,7 +193,8 @@ def persist_cfg() -> None:
 # SEND FUNCTIONS
 # ═══════════════════════════════════════════════════════════════════════════
 
-def send_slack(token: str, email: str, message: str) -> str:
+def send_slack(token: str, email: str, message: str,
+               attachment: tuple[str, bytes] | None = None) -> str:
     """Send a one-way Slack bot DM to the user identified by email.
     Returns "OK" on success, or an error string on failure."""
     if not token:
@@ -206,7 +209,16 @@ def send_slack(token: str, email: str, message: str) -> str:
         user_id = user_resp["user"]["id"]
         channel_resp = client.conversations_open(users=user_id)
         channel_id = channel_resp["channel"]["id"]
-        client.chat_postMessage(channel=channel_id, text=message)
+        if attachment:
+            fname, fbytes = attachment
+            client.files_upload_v2(
+                channel=channel_id,
+                filename=fname,
+                file=io.BytesIO(fbytes),
+                initial_comment=message,
+            )
+        else:
+            client.chat_postMessage(channel=channel_id, text=message)
         return "OK"
     except SlackApiError as exc:
         err = exc.response.get("error", str(exc))
@@ -215,7 +227,8 @@ def send_slack(token: str, email: str, message: str) -> str:
         return f"Error: {exc}"
 
 
-def send_email(settings: dict, to: str, subject: str, body: str) -> str:
+def send_email(settings: dict, to: str, subject: str, body: str,
+               attachment: tuple[str, bytes] | None = None) -> str:
     """Send email via SMTP with STARTTLS.
     Returns "OK" on success, or an error string on failure."""
     username = settings.get("smtpFromEmail", "").strip()
@@ -232,11 +245,19 @@ def send_email(settings: dict, to: str, subject: str, body: str) -> str:
         return "Error: No recipient email"
 
     try:
-        msg = MIMEMultipart("alternative")
+        msg = MIMEMultipart("mixed" if attachment else "alternative")
         msg["Subject"] = subject
         msg["From"] = f"{from_name} <{username}>"
         msg["To"] = to
         msg.attach(MIMEText(body, "plain", "utf-8"))
+
+        if attachment:
+            fname, fbytes = attachment
+            part = MIMEBase("application", "octet-stream")
+            part.set_payload(fbytes)
+            encoders.encode_base64(part)
+            part.add_header("Content-Disposition", f'attachment; filename="{fname}"')
+            msg.attach(part)
 
         with smtplib.SMTP(host, port, timeout=20) as srv:
             srv.ehlo()
@@ -479,6 +500,20 @@ def page_send():
             key="email_subject",
         )
 
+    # ── Row 6: Attachment (optional) ───────────────────────────────────────
+    st.subheader("📎 Attachment (optional)")
+    attachment_file = st.file_uploader(
+        "Attach a file to send along with the message (Slack & Email only)",
+        type=["pdf", "png", "jpg", "jpeg", "gif", "doc", "docx", "xlsx", "xls", "csv", "txt", "ppt", "pptx"],
+        key="attachment_file",
+    )
+    attachment: tuple[str, bytes] | None = None
+    if attachment_file:
+        attachment = (attachment_file.name, attachment_file.read())
+        st.caption(f"Selected: **{attachment_file.name}** ({len(attachment[1]) / 1024:.1f} KB)")
+        if use_whatsapp and not (use_slack or use_email):
+            st.info("Attachments are supported on Slack and Email only — WhatsApp will receive the text message.")
+
     st.divider()
 
     # ── Send Button ────────────────────────────────────────────────────────
@@ -513,7 +548,9 @@ def page_send():
             # Slack
             if use_slack:
                 if email_addr:
-                    result_row["slack"] = send_slack(settings.get("slackToken", ""), email_addr, message)
+                    result_row["slack"] = send_slack(
+                        settings.get("slackToken", ""), email_addr, message, attachment
+                    )
                 else:
                     result_row["slack"] = "Skipped: no email"
 
@@ -522,7 +559,9 @@ def page_send():
                 if email_addr:
                     signature = settings.get("emailSignature", "")
                     full_body = f"{message}\n\n{signature}".strip() if signature else message
-                    result_row["email_status"] = send_email(settings, email_addr, email_subject, full_body)
+                    result_row["email_status"] = send_email(
+                        settings, email_addr, email_subject, full_body, attachment
+                    )
                 else:
                     result_row["email_status"] = "Skipped: no email"
 
