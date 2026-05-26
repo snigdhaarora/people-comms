@@ -476,6 +476,7 @@ def page_send():
     if missing_maps:
         st.warning(f"Map these channel columns before sending: {', '.join(missing_maps)}")
 
+
     # ── Row 4: Message Preview ─────────────────────────────────────────────
     if category and category.get("template"):
         st.subheader("Message Preview")
