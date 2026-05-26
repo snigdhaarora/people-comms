@@ -211,20 +211,12 @@ def send_slack(token: str, email: str, message: str,
         channel_id = channel_resp["channel"]["id"]
         if attachment:
             fname, fbytes = attachment
-            try:
-                client.files_upload_v2(
-                    channel=channel_id,
-                    filename=fname,
-                    file=io.BytesIO(fbytes),
-                    initial_comment=message,
-                )
-                return "OK"
-            except SlackApiError as exc:
-                if exc.response.get("error") == "missing_scope":
-                    # Workspace blocks files:write — send text and note it
-                    client.chat_postMessage(channel=channel_id, text=message)
-                    return "OK (text only — file sent via email; Slack needs files:write scope)"
-                raise
+            client.files_upload_v2(
+                channel=channel_id,
+                filename=fname,
+                file=io.BytesIO(fbytes),
+                initial_comment=message,
+            )
         else:
             client.chat_postMessage(channel=channel_id, text=message)
         return "OK"
