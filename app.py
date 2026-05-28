@@ -1,5 +1,5 @@
 """
-People Comms — Streamlit App
+People & Culture — Streamlit App
 ========================================
 Replaces the Flask + portal.html setup with a pure-Streamlit interface.
 
@@ -948,7 +948,7 @@ def page_admin():
 
 def main():
     st.set_page_config(
-        page_title="People Comms",
+        page_title="People & Culture",
         page_icon="All Blue.png",
         layout="wide",
         initial_sidebar_state="expanded",
@@ -961,7 +961,7 @@ def main():
         st.markdown(
             """
             <div style="text-align:center; padding: 0.1rem 0 0.5rem 0;">
-                <div style="font-size:1.1rem; font-weight:700; color:#4B4BF7;">People Comms</div>
+                <div style="font-size:1.1rem; font-weight:700; color:#4B4BF7;">People & Culture</div>
             </div>
             """,
             unsafe_allow_html=True,
